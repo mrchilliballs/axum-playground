@@ -13,6 +13,8 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
+mod ledger;
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
@@ -21,10 +23,12 @@ async fn main() {
         .route("/increment", post(increment))
         .route("/", get(count))
         .with_state(Arc::new(AtomicI32::new(0)));
+    let ledger = ledger::router();
     let app = Router::new()
         .route("/", get(root))
         .route("/add", post(add))
-        .nest("/counter", counter);
+        .nest("/counter", counter)
+        .nest("/ledger", ledger);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
